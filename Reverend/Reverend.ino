@@ -7,15 +7,12 @@
 #include "Thread.h"
 #include "PololuDC.h"
 
-
-
-
-
 // Parameters
 #include "PinDefinitions.h"
 
 // Global variables
-unsigned long time;
+
+unsigned long time = 0;
 
 long encoder_position = 0;
 unsigned int encoder_errors = 0;
@@ -24,7 +21,7 @@ unsigned int encoder_errors = 0;
 // State machine
 enum state_t {
   AWAIT_ENABLE,
-  INIT, // start main logic
+  INIT,
   HALT,
   ERROR_STATE,
   COMPLETE, // end

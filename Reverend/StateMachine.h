@@ -1,31 +1,6 @@
-/*
-enum state_t {
- INIT,
- HALT,
- ERROR_STATE,
- HOME_MOTORS, // multi-sensor trigger
- RELEASE_DOOR, // timed
- INITIATE_VISION, // single
- ACCEPT_PACKET, // trigger
- REMOTE_MOVE, // sensor trigger (?)
- SEND_ACK, // single
- DRIVE_CONVEYOR, // sensor trigger
- RAISE_CONVEYOR, // sensor trigger
- STORE_ARM, // sensor trigger
- RETRACT_BELT, // sensor trigger
- RUN_ELEVATOR, // sensor trigger
- AWAIT_PAYLOAD, // sensor trigger
- DELAY_NOSE_CLOSURE, // timed
- DEPLOY_NOSE_CLOSURE, // count
- RETRACT_NOSE_CLOSURE, // count
- ERECT_ROCKET, // timed
- INSERT_IGNITER, // sensor trigger
- COMPLETE // end
- // IDLE
- };
- */
 
 
+// Wait for enable switch to start state machine
 void state_await_enable(unsigned long diff, unsigned long state_time) {
   static boolean val = true;
   static boolean prev_val = true;
@@ -44,6 +19,7 @@ void state_await_enable(unsigned long diff, unsigned long state_time) {
 }
 
 
+// Home motors that use encoders and reset integrators
 void state_home_motor(unsigned long diff, unsigned long state_time) {
   static unsigned char phase = 0;
 
@@ -54,6 +30,7 @@ void state_home_motor(unsigned long diff, unsigned long state_time) {
   FSM_state = RELEASE_DOOR;
 }
 
+// Pulse the front hatch and rocket door solenoids to open
 void state_release_door(unsigned long diff, unsigned long state_time) {
   pinMode(SLND_FRONT_HATCH_PIN, HIGH);
   pinMode(SLND_ROCKET_HATCH_PIN, HIGH);
@@ -65,6 +42,7 @@ void state_release_door(unsigned long diff, unsigned long state_time) {
   }
 }
 
+// Send command to RasPi signalling that movement commands will be accepted
 void state_initiate_vision(unsigned long diff, unsigned long state_time) {
   // TODO: write this function
   Serial.println("Bypassing vision initialisation routine...");
@@ -72,6 +50,7 @@ void state_initiate_vision(unsigned long diff, unsigned long state_time) {
   FSM_state = ACCEPT_PACKET;
 }
 
+// Process packets from the RasPi and delegate to relevant states and functions
 void state_accept_packet(unsigned long diff, unsigned long state_time) {
   // TODO: write this
   Serial.println("Bypassing vision packet socket loop...");
@@ -80,14 +59,19 @@ void state_accept_packet(unsigned long diff, unsigned long state_time) {
 
 }
 
+// Initiate requested motion
 void state_remote_move(unsigned long diff, unsigned long state_time) {
   // TODO: write this
 }
 
+// Signal to RasPi that requested action is complete.
 void state_send_ack(unsigned long diff, unsigned long state_time) {
   // TODO: write
+   state_transition_time = time;
+  FSM_state = ACCEPT_PACKET;
 }
 
+// Drive conveyor until beam break is triggered
 void state_drive_conveyor(unsigned long diff, unsigned long state_time) {
   // TODO: write
   Serial.println("Bypassing conveyor drive...");
@@ -95,6 +79,7 @@ void state_drive_conveyor(unsigned long diff, unsigned long state_time) {
   FSM_state = RAISE_CONVEYOR;
 }
 
+// Raise conveyor until limit switch is triggered
 void state_raise_conveyor(unsigned long diff, unsigned long state_time) {
   // TODO: this
   Serial.println("Bypassing conveyor raise...");
@@ -102,6 +87,7 @@ void state_raise_conveyor(unsigned long diff, unsigned long state_time) {
   FSM_state = STORE_ARM;
 }
 
+// Rotate arm yaw until limit switch is triggered
 void state_store_arm(unsigned long diff, unsigned long state_time) {
   // TODO: this
   Serial.println("Bypassing arm stow...");
@@ -109,6 +95,8 @@ void state_store_arm(unsigned long diff, unsigned long state_time) {
   FSM_state = RETRACT_BELT;
 }
 
+
+// Retract linear belt until limit switch is triggered (can ignore encoder)
 void state_retract_belt(unsigned long diff, unsigned long state_time) {
   // todo: this is already written somewhere?
   Serial.println("Bypassing belt retract...");
@@ -116,6 +104,8 @@ void state_retract_belt(unsigned long diff, unsigned long state_time) {
   FSM_state = RUN_ELEVATOR;
 }
 
+
+// Raise elevator until beam break is triggered
 void state_run_elevator(unsigned long diff, unsigned long state_time) {
   // TODO: yeah
   Serial.println("Bypassing elevator run...");
@@ -124,6 +114,8 @@ void state_run_elevator(unsigned long diff, unsigned long state_time) {
 
 }
 
+// Await beam break indicating successful payload capture.
+// Time out to a failure state indicating a lost payload
 void state_await_payload(unsigned long diff, unsigned long state_time) {
   // TODO: yeah
   Serial.println("Bypassing payload wait procedure...");
@@ -131,6 +123,7 @@ void state_await_payload(unsigned long diff, unsigned long state_time) {
   FSM_state = DELAY_NOSE_CLOSURE;
 }
 
+// Wait for 5 seconds for payload to settle
 void state_delay_nose_closure(unsigned long diff, unsigned long state_time) {
   if (state_time > 5000) {
     state_transition_time = time;
@@ -138,6 +131,8 @@ void state_delay_nose_closure(unsigned long diff, unsigned long state_time) {
   }
 }
 
+// Run nosecone closure motor until limit switch is triggered.
+// Record and store the number of steps needed to do so.
 void state_deploy_nose_closure(unsigned long diff, unsigned long state_time) {
   // TODO: yeah
   Serial.println("Bypassing nose closure deployment procedure...");
@@ -145,6 +140,7 @@ void state_deploy_nose_closure(unsigned long diff, unsigned long state_time) {
   FSM_state = RETRACT_NOSE_CLOSURE;
 }
 
+// Retract stepper by the number of steps recorded by the previous state
 void state_retract_nose_closure(unsigned long diff, unsigned long state_time) {
   // TODO: yeah
   Serial.println("Bypassing nose closure retraction procedure...");
@@ -152,6 +148,8 @@ void state_retract_nose_closure(unsigned long diff, unsigned long state_time) {
   FSM_state = ERECT_ROCKET;
 }
 
+
+// Pulse rocket lift solenoids to engage gas springs
 void state_erect_rocket(unsigned long diff, unsigned long state_time) {
   pinMode(SLND_LAUNCH_ROD_PIN, HIGH);
   if (state_time > 750) {
@@ -162,6 +160,7 @@ void state_erect_rocket(unsigned long diff, unsigned long state_time) {
 
 }
 
+// Run steppers until limit 
 void state_insert_igniter(unsigned long diff, unsigned long state_time) {
   // TODO: yeah
   Serial.println("Bypassing igniter insertion...");
