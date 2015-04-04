@@ -11,11 +11,10 @@ class PololuDC {
 
 
   public:
-
-    static const int8_t FORWARD = 1;
-    static const int8_t BACKWARD = 2;
-    static const int8_t BRAKE = 3;
-    static const int8_t RELEASE = 4;
+    static const uint8_t DC_FORWARD = 1;
+    static const uint8_t DC_BACKWARD = 2;
+    static const uint8_t DC_BRAKE = 3;
+    static const uint8_t DC_RELEASE = 4;
 
     PololuDC(uint8_t in_a, uint8_t in_b, uint8_t pwm, uint8_t diag, uint8_t cs) {
       IN_A_PIN = in_a;
@@ -23,8 +22,6 @@ class PololuDC {
       PWM_PIN = pwm;
       DIAG_PIN = diag;
       CS_PIN = cs;
-
-
     }
 
     PololuDC(uint8_t in_a, uint8_t in_b, uint8_t pwm, uint8_t diag) {
@@ -33,7 +30,6 @@ class PololuDC {
       PWM_PIN = pwm;
       DIAG_PIN = diag;
       CS_PIN = -1;
-
     }
 
 
@@ -76,7 +72,7 @@ class PololuDC {
       if (CS_PIN == -1) {
         return 0;
       }
-      return (float)analogRead(CS_PIN) * 0.02523526278409; // steps * 5 * 11370 / (1024 * 1500)
+      return (float)analogRead(CS_PIN) * 0.03756; // steps * 5 / 1024 / 0.13
     }
 
     boolean getDiagnosticStatus() {

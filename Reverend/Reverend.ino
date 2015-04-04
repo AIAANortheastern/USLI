@@ -1,16 +1,18 @@
-// Configuration files
-#include "pin_declaration.h"
-
 // External libraries
 #include <avr/wdt.h>
+#include <Wire.h>
+#include <Adafruit_MotorShield.h>
 
 // Internal Libraries
-#include "PolledUpdate.h"
+#include "Thread.h"
 #include "PololuDC.h"
 
 
-// Parameters
 
+
+
+// Parameters
+#include "PinDefinitions.h"
 
 // Global variables
 unsigned long time;
@@ -19,10 +21,13 @@ long encoder_position = 0;
 unsigned int encoder_errors = 0;
 
 
+// State machine
 enum state_t {
-  INIT,
+  AWAIT_ENABLE,
+  INIT, // start main logic
   HALT,
   ERROR_STATE,
+  COMPLETE, // end
   HOME_MOTORS, // multi-sensor trigger
   RELEASE_DOOR, // timed
   INITIATE_VISION, // single
@@ -40,13 +45,9 @@ enum state_t {
   RETRACT_NOSE_CLOSURE, // count
   ERECT_ROCKET, // timed
   INSERT_IGNITER // sensor trigger
-  // IDLE
-
-
-
 };
 
-state_t FSM_state = INIT;
+state_t FSM_state = AWAIT_ENABLE;
 
 unsigned long state_transition_time = 0;
 
@@ -57,60 +58,41 @@ unsigned long state_transition_time = 0;
 #include "Encoder.h"
 #include "Debug.h"
 #include "Motion.h"
+#include "VisualIndicators.h"
 
 // Threads
 Thread Encoder_Thread(&encoder_cb, 1);
 Thread FSM_Thread(&state_machine_cb, 10);
-Thread Motion_Thread(&motion_cb, 10); // TODO: what frequency is this!?
+Thread Stepper_Motion_Thread(&stepper_motion_cb, 1); // TODO: Decrease update frequency for steppers
+Thread DC_Motion_Thread(&dc_motion_cb, 10); // TODO: Decrease update frequency for steppers
 Thread Halt_Thread(&halt_cb, 50);
-Thread Debug_Thread(&debug_cb, 500);
+Thread Visual_Indicators_Thread(&visual_indicators_cb, 500);
+Thread Debug_Thread(&debug_cb, 100);
 
+
+// Functions
+#include "IOSetup.h"
 
 void setup() {
+
   establishSafeState(); // Immediately place system into a safe state
+  
   pinSetup();
 
 
   Serial.begin(9600);
 
-  waitForEnable();
 }
 
 void loop() {
   time = millis();
 
+
   Encoder_Thread.update(time);
   FSM_Thread.update(time);
+  Stepper_Motion_Thread.update(time);
+  DC_Motion_Thread.update(time);
   Halt_Thread.update(time);
+  Visual_Indicators_Thread.update(time);
   Debug_Thread.update(time);
 }
-
-void establishSafeState() {
-  // haha nope
-}
-
-
-// Wait until the pause switch has a rising edge
-// Requires a toggle when system is initialized in "Enable" position
-void waitForEnable() {
-  static boolean val = true, prev_val = true;
-  boolean wait = true;
-  while (wait) {
-    if (val && !prev_val) {
-      wait = false;
-    }
-    prev_val = val;
-    val = digitalRead(CFSW_PAUSE_ENABLE_PIN);
-    delay(50);
-  }
-
-}
-
-
-
-void pinSetup() {
-  pinMode(CFSW_PAUSE_ENABLE_PIN, INPUT);
-  pinMode(ENCR_BELT_LINEAR_A_PIN, INPUT_PULLUP);
-  pinMode(ENCR_BELT_LINEAR_B_PIN, INPUT_PULLUP);
-}
-
