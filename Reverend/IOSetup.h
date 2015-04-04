@@ -1,6 +1,6 @@
 
 // Perform minimum initialization needed to establish a safe state
-void establishSafeState() {
+void establish_safe_state() {
   pinMode(SLND_FRONT_HATCH_PIN, OUTPUT); digitalWrite(SLND_FRONT_HATCH_PIN, LOW);
   pinMode(SLND_LAUNCH_ROD_PIN, OUTPUT); digitalWrite(SLND_LAUNCH_ROD_PIN, LOW);
   pinMode(SLND_ROCKET_HATCH_PIN, OUTPUT); digitalWrite(SLND_ROCKET_HATCH_PIN, LOW);
@@ -11,11 +11,12 @@ void establishSafeState() {
 }
 
 
-void pinSetup() {
+void pin_setup() {
   // steppers
   AFMS.begin();
   Arm_Yaw_Stepper->release();
   Nose_Closure_Stepper->release();
+
 
   // inputs
   pinMode(LMTS_IGNITER_INSERTER_NEAR_PIN, INPUT_PULLUP);

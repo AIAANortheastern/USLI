@@ -11,7 +11,6 @@
 #include "PinDefinitions.h"
 
 // Global variables
-
 unsigned long time = 0;
 
 long encoder_position = 0;
@@ -24,28 +23,27 @@ enum state_t {
   INIT,
   HALT,
   ERROR_STATE,
-  COMPLETE, // end
-  HOME_MOTORS, // multi-sensor trigger
-  RELEASE_DOOR, // timed
-  INITIATE_VISION, // single
-  ACCEPT_PACKET, // trigger
-  REMOTE_MOVE, // sensor trigger (?)
-  SEND_ACK, // single
-  DRIVE_CONVEYOR, // sensor trigger
-  RAISE_CONVEYOR, // sensor trigger
-  STORE_ARM, // sensor trigger
-  RETRACT_BELT, // sensor trigger
-  RUN_ELEVATOR, // sensor trigger
-  AWAIT_PAYLOAD, // sensor trigger
-  DELAY_NOSE_CLOSURE, // timed
-  DEPLOY_NOSE_CLOSURE, // count
-  RETRACT_NOSE_CLOSURE, // count
-  ERECT_ROCKET, // timed
-  INSERT_IGNITER // sensor trigger
+  COMPLETE,
+  HOME_MOTORS,
+  RELEASE_DOOR,
+  INITIATE_VISION,
+  ACCEPT_PACKET,
+  REMOTE_MOVE,
+  SEND_ACK,
+  DRIVE_CONVEYOR,
+  RAISE_CONVEYOR,
+  STORE_ARM,
+  RETRACT_BELT,
+  RUN_ELEVATOR,
+  AWAIT_PAYLOAD,
+  DELAY_NOSE_CLOSURE,
+  DEPLOY_NOSE_CLOSURE,
+  RETRACT_NOSE_CLOSURE,
+  ERECT_ROCKET,
+  INSERT_IGNITER
 };
 
 state_t FSM_state = AWAIT_ENABLE;
-
 unsigned long state_transition_time = 0;
 
 
@@ -61,7 +59,7 @@ unsigned long state_transition_time = 0;
 Thread Encoder_Thread(&encoder_cb, 1);
 Thread FSM_Thread(&state_machine_cb, 10);
 Thread Stepper_Motion_Thread(&stepper_motion_cb, 1); // TODO: Decrease update frequency for steppers
-Thread DC_Motion_Thread(&dc_motion_cb, 10); // TODO: Decrease update frequency for steppers
+Thread DC_Motion_Thread(&dc_motion_cb, 1); // TODO: Decrease update frequency for dc
 Thread Halt_Thread(&halt_cb, 50);
 Thread Visual_Indicators_Thread(&visual_indicators_cb, 500);
 Thread Debug_Thread(&debug_cb, 100);
@@ -71,11 +69,9 @@ Thread Debug_Thread(&debug_cb, 100);
 #include "IOSetup.h"
 
 void setup() {
-
-  establishSafeState(); // Immediately place system into a safe state
+  establish_safe_state(); // Immediately place system into a safe state
   
-  pinSetup();
-
+  pin_setup(); // set up non-critical pins
 
   Serial.begin(9600);
 
@@ -83,7 +79,6 @@ void setup() {
 
 void loop() {
   time = millis();
-
 
   Encoder_Thread.update(time);
   FSM_Thread.update(time);

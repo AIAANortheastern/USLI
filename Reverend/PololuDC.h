@@ -1,5 +1,4 @@
 // TODO: Check "release" code
-#include "Arduino.h"
 
 class PololuDC {
   private:
@@ -45,19 +44,19 @@ class PololuDC {
     }
 
     void setDirection(int8_t dir) {
-      if (dir == FORWARD) {
+      if (dir == DC_FORWARD) {
         digitalWrite(IN_A_PIN, HIGH);
         digitalWrite(IN_B_PIN, LOW);
       }
-      else if (dir == BACKWARD) {
+      else if (dir == DC_BACKWARD) {
         digitalWrite(IN_A_PIN, LOW);
         digitalWrite(IN_B_PIN, HIGH);
       }
-      else if (dir == BRAKE) {
+      else if (dir == DC_BRAKE) {
         digitalWrite(IN_A_PIN, LOW);
         digitalWrite(IN_B_PIN, LOW);
       }
-      else if (dir == RELEASE) {
+      else if (dir == DC_RELEASE) {
         digitalWrite(IN_A_PIN, LOW);
         digitalWrite(IN_B_PIN, LOW);
         digitalWrite(PWM_PIN, LOW);
@@ -90,6 +89,12 @@ class PololuDC {
       digitalWrite(IN_A_PIN, LOW);
       digitalWrite(IN_B_PIN, LOW);
       digitalWrite(PWM_PIN, LOW);
+    }
+    
+    void safety() {
+      if (getAmperage() > 18.0) {
+        disable();
+      }
     }
 
 

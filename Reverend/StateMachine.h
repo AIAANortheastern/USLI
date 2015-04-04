@@ -1,6 +1,7 @@
 
 
 // Wait for enable switch to start state machine
+// Exits on sensor input
 void state_await_enable(unsigned long diff, unsigned long state_time) {
   static boolean val = true;
   static boolean prev_val = true;
@@ -20,17 +21,63 @@ void state_await_enable(unsigned long diff, unsigned long state_time) {
 
 
 // Home motors that use encoders and reset integrators
+// Exits on multiple sensor inputs
 void state_home_motor(unsigned long diff, unsigned long state_time) {
   static unsigned char phase = 0;
 
-  // TODO: home motors
-  // currently bypassing directly to the door release
-  Serial.println("Bypassing motor homing routine...");
-  state_transition_time = time;
-  FSM_state = RELEASE_DOOR;
+  boolean igniter_inserter_homed = false;
+  boolean arm_yaw_homed = false;
+  boolean belt_linear_homed = false;
+
+  if (!igniter_inserter_homed) {
+    boolean limit = digitalRead(LMTS_IGNITER_INSERTER_NEAR_PIN); // triggers when LOW
+    if (limit) { // not pressed, back up
+      Igniter_Inserter_Motor.enable();
+      Igniter_Inserter_Motor.setDirection(DC_BACKWARD);
+      Igniter_Inserter_Motor.setSpeed(64);
+    } else { // hit limit switch
+      Igniter_Inserter_Motor.setSpeed(0);
+      Igniter_Inserter_Motor.disable();
+      igniter_inserter_homed = true;
+    }
+  }
+
+  if (!arm_yaw_homed) {
+    // TODO: Arm yaw
+    arm_yaw_homed = true;
+  }
+
+  if (!belt_linear_homed) {
+    boolean limit = digitalRead(LMTS_BELT_LINEAR_NEAR_PIN); // triggers when LOW
+    if (limit) { // not pressed, back up
+      Belt_Linear_Motor.enable();
+      Belt_Linear_Motor.setDirection(DC_BACKWARD);
+      Belt_Linear_Motor.setSpeed(64);
+    } else { // hit limit switch
+      Belt_Linear_Motor.setSpeed(0);
+      Belt_Linear_Motor.disable();
+      belt_linear_homed = true;
+    }
+  }
+
+  if (igniter_inserter_homed && arm_yaw_homed && belt_linear_homed) {
+    state_transition_time = time;
+    FSM_state = RELEASE_DOOR;
+  }
+
+  if (state_time > 2000) {// Timed out! Something is wrong
+    Serial.print("[FSM.HOME] Critical error! Motors cannot be homed: ");
+    Serial.print(igniter_inserter_homed);
+    Serial.print(arm_yaw_homed);
+    Serial.print(belt_linear_homed);
+
+    state_transition_time = time;
+    FSM_state = ERROR_STATE;
+  }
 }
 
 // Pulse the front hatch and rocket door solenoids to open
+// Exits after set time
 void state_release_door(unsigned long diff, unsigned long state_time) {
   pinMode(SLND_FRONT_HATCH_PIN, HIGH);
   pinMode(SLND_ROCKET_HATCH_PIN, HIGH);
@@ -43,6 +90,7 @@ void state_release_door(unsigned long diff, unsigned long state_time) {
 }
 
 // Send command to RasPi signalling that movement commands will be accepted
+// Exits immediately
 void state_initiate_vision(unsigned long diff, unsigned long state_time) {
   // TODO: write this function
   Serial.println("Bypassing vision initialisation routine...");
@@ -51,6 +99,7 @@ void state_initiate_vision(unsigned long diff, unsigned long state_time) {
 }
 
 // Process packets from the RasPi and delegate to relevant states and functions
+// Exits on recieved command
 void state_accept_packet(unsigned long diff, unsigned long state_time) {
   // TODO: write this
   Serial.println("Bypassing vision packet socket loop...");
@@ -60,18 +109,21 @@ void state_accept_packet(unsigned long diff, unsigned long state_time) {
 }
 
 // Initiate requested motion
+// Not really sure how this is going to work yet.
 void state_remote_move(unsigned long diff, unsigned long state_time) {
   // TODO: write this
 }
 
 // Signal to RasPi that requested action is complete.
+// Exits immediately
 void state_send_ack(unsigned long diff, unsigned long state_time) {
   // TODO: write
-   state_transition_time = time;
+  state_transition_time = time;
   FSM_state = ACCEPT_PACKET;
 }
 
 // Drive conveyor until beam break is triggered
+// Exits on sensor input
 void state_drive_conveyor(unsigned long diff, unsigned long state_time) {
   // TODO: write
   Serial.println("Bypassing conveyor drive...");
@@ -80,6 +132,7 @@ void state_drive_conveyor(unsigned long diff, unsigned long state_time) {
 }
 
 // Raise conveyor until limit switch is triggered
+// Exits on sensor input
 void state_raise_conveyor(unsigned long diff, unsigned long state_time) {
   // TODO: this
   Serial.println("Bypassing conveyor raise...");
@@ -88,6 +141,7 @@ void state_raise_conveyor(unsigned long diff, unsigned long state_time) {
 }
 
 // Rotate arm yaw until limit switch is triggered
+// Exits on sensor input
 void state_store_arm(unsigned long diff, unsigned long state_time) {
   // TODO: this
   Serial.println("Bypassing arm stow...");
@@ -97,6 +151,7 @@ void state_store_arm(unsigned long diff, unsigned long state_time) {
 
 
 // Retract linear belt until limit switch is triggered (can ignore encoder)
+// Exits on sensor input
 void state_retract_belt(unsigned long diff, unsigned long state_time) {
   // todo: this is already written somewhere?
   Serial.println("Bypassing belt retract...");
@@ -106,6 +161,7 @@ void state_retract_belt(unsigned long diff, unsigned long state_time) {
 
 
 // Raise elevator until beam break is triggered
+// Exits on sensor input
 void state_run_elevator(unsigned long diff, unsigned long state_time) {
   // TODO: yeah
   Serial.println("Bypassing elevator run...");
@@ -116,6 +172,7 @@ void state_run_elevator(unsigned long diff, unsigned long state_time) {
 
 // Await beam break indicating successful payload capture.
 // Time out to a failure state indicating a lost payload
+// Exits on sensor input
 void state_await_payload(unsigned long diff, unsigned long state_time) {
   // TODO: yeah
   Serial.println("Bypassing payload wait procedure...");
@@ -124,6 +181,7 @@ void state_await_payload(unsigned long diff, unsigned long state_time) {
 }
 
 // Wait for 5 seconds for payload to settle
+// Exits after set time
 void state_delay_nose_closure(unsigned long diff, unsigned long state_time) {
   if (state_time > 5000) {
     state_transition_time = time;
@@ -133,6 +191,7 @@ void state_delay_nose_closure(unsigned long diff, unsigned long state_time) {
 
 // Run nosecone closure motor until limit switch is triggered.
 // Record and store the number of steps needed to do so.
+// Exits on sensor input
 void state_deploy_nose_closure(unsigned long diff, unsigned long state_time) {
   // TODO: yeah
   Serial.println("Bypassing nose closure deployment procedure...");
@@ -141,6 +200,7 @@ void state_deploy_nose_closure(unsigned long diff, unsigned long state_time) {
 }
 
 // Retract stepper by the number of steps recorded by the previous state
+// Exits on sensor input
 void state_retract_nose_closure(unsigned long diff, unsigned long state_time) {
   // TODO: yeah
   Serial.println("Bypassing nose closure retraction procedure...");
@@ -160,7 +220,7 @@ void state_erect_rocket(unsigned long diff, unsigned long state_time) {
 
 }
 
-// Run steppers until limit 
+// Run steppers until limit
 void state_insert_igniter(unsigned long diff, unsigned long state_time) {
   // TODO: yeah
   Serial.println("Bypassing igniter insertion...");
@@ -238,7 +298,7 @@ void state_machine_cb(unsigned long diff) {
       state_insert_igniter(diff, time - state_transition_time);
       break;
     case COMPLETE:
-      // wait
+      // wait forever
       break;
     default:
       Serial.print("[FSM] Critical error! State ");
