@@ -261,17 +261,7 @@ void state_insert_igniter(unsigned long diff, unsigned long state_time) {
 
 /*
 enum state_t {
-  AWAIT_ENABLE,
-  INIT,
-  HALT,
-  ERROR_STATE,
-  RELEASE_DOORS,
-  HOME_MOTORS,
-  CENTER_ARM_YAW,
-  INITIATE_VISION,
-  MOVE_BELT_STEPS,
-  DELAY_BELT_STEPS,
-  ARM_YAW_SETPOINT,
+
   DROP_CONVEYOR,
   RUN_RAKES,
   DELAY_POST_RAKE,
@@ -313,6 +303,39 @@ void state_machine_cb(unsigned long diff) {
     case RELEASE_DOORS:
       state_release_doors(diff, time - state_transition_time);
       break;
+    case CENTER_ARM_YAW:
+      state_center_arm_yaw(diff, time - state_transition_time);
+      break;
+    case INITIATE_VISION:
+      state_initiate_vision(diff, time - state_transition_time);
+      break;
+    case MOVE_BELT_STEPS:
+      state_move_belt_steps(diff, time - state_transition_time);
+      break;
+    case DELAY_BELT_STEPS:
+      state_delay_belt_steps(diff, time - state_transition_time);
+      break;
+    case ARM_YAW_SETPOINT:
+      state_arm_yaw_setpoint(diff, time - state_transition_time);
+      break;
+    case DROP_CONVEYOR:
+      state_drop_conveyor(diff, time - state_transition_time);
+      break;
+    case RUN_RAKES:
+      state_run_rakes(diff, time - state_transition_time);
+      break;
+    case DELAY_POST_RAKE:
+      state_delay_post_rake(diff, time - state_transition_time);
+      break;
+      case BRING_ARM_UP:
+      state_bring_arm_up(diff, time - state_transition_time);
+      break;
+      case PERP_ARM:
+      state_perp_arm(diff, time - state_transition_time);
+      break;
+      case ZERO_BELT:
+      state_zero_belt(diff, time - state_transition_time);
+      
 
     case COMPLETE:
       // wait forever
