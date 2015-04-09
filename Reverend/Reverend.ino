@@ -8,6 +8,7 @@
 #include "PololuDC.h"
 
 // Parameters
+#define STEPS_PER_FOOT 222.24
 #include "PinDefinitions.h"
 
 // Global variables
@@ -15,6 +16,8 @@ unsigned long time = 0;
 
 long encoder_position = 0;
 unsigned int encoder_errors = 0;
+
+unsigned int steps_to_nose_closure = 0;
 
 
 // State machine

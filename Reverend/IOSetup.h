@@ -8,6 +8,8 @@ void establish_safe_state() {
   Elevator_Motor.setup();
   Belt_Linear_Motor.setup();
   Arm_Pitch_Motor.setup();
+  Arm_Pitch_Motor.enable();
+  Arm_Pitch_Motor.setDirection(PololuDC::BRAKE);
 }
 
 

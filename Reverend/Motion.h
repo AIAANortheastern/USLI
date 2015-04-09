@@ -5,7 +5,8 @@ void stepper_motion_cb(unsigned long diff) {
 void dc_motion_cb(unsigned long diff) {
   // Enforce soft limits
   // TODO: Direction sensitivity
-  boolan near, far;
+  // TODO: The rest of the motors with limit switches
+  boolean near, far;
   far = digitalRead(LMTS_IGNITER_INSERTER_FAR_PIN);
   near = digitalRead(LMTS_IGNITER_INSERTER_NEAR_PIN);
   if (!(far && near)) {
