@@ -89,13 +89,42 @@ void state_release_door(unsigned long diff, unsigned long state_time) {
   }
 }
 
+// Extend the belt to its full range
+// Exits after encoder value reached
+void state_extend_belt(unsigned long diff, unsigned long state_time) {
+
+  Serial.println("[FSM] Error! Belt extension not implemented...");
+  state_transition_time = time;
+  FSM_state = FIND_LINEAR_SETPOINT;
+}
+
+// Move the linear belt to a predefined setpoint
+// Exits aftert encoder value is reached
+void state_find_linear_setpoint(unsigned long diff, unsigned long state_time) {
+
+  Serial.println("[FSM] Error! Belt linear setpoint seek not implemented...");
+  state_transition_time = time;
+  FSM_state = FIND_YAW_SETPOINT;
+}
+
+
+// Rotate the arm yaw stepper to a predefined setpoint
+// Exits after stepper is pulsed a set number of times
+void state_find_yaw_setpoint(unsigned long diff, unsigned long state_time) {
+
+  Serial.println("[FSM] Error! Arm yaw setpoint seek not implemented...");
+  state_transition_time = time;
+  FSM_state = DRIVE_CONVEYOR;
+}
+
+
 // Send command to RasPi signalling that movement commands will be accepted
 // Exits immediately
 void state_initiate_vision(unsigned long diff, unsigned long state_time) {
-  // TODO: write this function
-  Serial.println("Bypassing vision initialisation routine...");
+  // Vision system disabled presently
+  Serial.println("[FSM] Vision system disabled");
   state_transition_time = time;
-  FSM_state = ACCEPT_PACKET;
+  FSM_state = DRIVE_CONVEYOR;
 }
 
 // Process packets from the RasPi and delegate to relevant states and functions
@@ -111,22 +140,22 @@ void state_accept_packet(unsigned long diff, unsigned long state_time) {
 // Initiate requested motion
 // Not really sure how this is going to work yet.
 void state_remote_move(unsigned long diff, unsigned long state_time) {
-  // TODO: write this
+  // TODO: implement
 }
 
 // Signal to RasPi that requested action is complete.
 // Exits immediately
 void state_send_ack(unsigned long diff, unsigned long state_time) {
-  // TODO: write
+  // TODO: implement
   state_transition_time = time;
   FSM_state = ACCEPT_PACKET;
 }
 
-// Drive conveyor until beam break is triggered
-// Exits on sensor input
+// Drive conveyor for a specified duration
+// Exits on timed transition
 void state_drive_conveyor(unsigned long diff, unsigned long state_time) {
-  // TODO: write
-  Serial.println("Bypassing conveyor drive...");
+  // TODO: implement
+  Serial.println("[FSM] Error! Conveyor drive unimplemented...");
   state_transition_time = time;
   FSM_state = RAISE_CONVEYOR;
 }
@@ -134,8 +163,8 @@ void state_drive_conveyor(unsigned long diff, unsigned long state_time) {
 // Raise conveyor until limit switch is triggered
 // Exits on sensor input
 void state_raise_conveyor(unsigned long diff, unsigned long state_time) {
-  // TODO: this
-  Serial.println("Bypassing conveyor raise...");
+  // TODO: implement
+  Serial.println("[FSM] Error! Conveyor raise unimplemented...");
   state_transition_time = time;
   FSM_state = STORE_ARM;
 }
@@ -143,8 +172,8 @@ void state_raise_conveyor(unsigned long diff, unsigned long state_time) {
 // Rotate arm yaw until limit switch is triggered
 // Exits on sensor input
 void state_store_arm(unsigned long diff, unsigned long state_time) {
-  // TODO: this
-  Serial.println("Bypassing arm stow...");
+  // TODO: implement
+  Serial.println("[FSM] Error! Arm stow unimplemented...");
   state_transition_time = time;
   FSM_state = RETRACT_BELT;
 }
@@ -154,13 +183,13 @@ void state_store_arm(unsigned long diff, unsigned long state_time) {
 // Exits on sensor input
 void state_retract_belt(unsigned long diff, unsigned long state_time) {
   // todo: this is already written somewhere?
-  Serial.println("Bypassing belt retract...");
+  Serial.println("[FSM] Error! Belt retract unimplemented...");
   state_transition_time = time;
   FSM_state = RUN_ELEVATOR;
 }
 c
 
-// Raise elevator until beam break is triggered
+// Raise elevator until limit switch is triggered
 // Exits on sensor input
 void state_run_elevator(unsigned long diff, unsigned long state_time) {
   // TODO: yeah
@@ -238,19 +267,27 @@ void state_machine_cb(unsigned long diff) {
     case INIT:
       state_transition_time = time;
       FSM_state = HOME_MOTORS;
-
       break;
     case HALT:
       // do nothing
       break;
     case ERROR_STATE:
-      // Remain in error state
+      // Remain in error state, sadly
       break;
     case HOME_MOTORS:
       state_home_motor(diff, time - state_transition_time);
       break;
     case RELEASE_DOOR:
       state_release_door(diff, time - state_transition_time);
+      break;
+    case EXTEND_BELT:
+      state_extend_belt(diff, time - state_transition_time);
+      break;
+    case FIND_LINEAR_SETPOINT:
+      state_find_linear_setpoint(diff, time - state_transition_time);
+      break;
+    case FIND_YAW_SETPOINT:
+      state_find_yaw_setpoint(diff, time - state_transition_time);
       break;
     case INITIATE_VISION:
       state_initiate_vision(diff, time - state_transition_time);
@@ -275,6 +312,9 @@ void state_machine_cb(unsigned long diff) {
       break;
     case RETRACT_BELT:
       state_retract_belt(diff, time - state_transition_time);
+      break;
+    case LOWER_ELEVATOR:
+      state_lower_elevator(diff, time - state_transition_time);
       break;
     case RUN_ELEVATOR:
       state_run_elevator(diff, time - state_transition_time);
@@ -301,9 +341,9 @@ void state_machine_cb(unsigned long diff) {
       // wait forever
       break;
     default:
-      Serial.print("[FSM] Critical error! State ");
+      Serial.print("[FSM] Critical error! State {");
       Serial.print(FSM_state);
-      Serial.println(" not defined! Halting...");
+      Serial.println("} not defined! Halting...");
       state_transition_time = time;
       FSM_state = ERROR_STATE;
   }
