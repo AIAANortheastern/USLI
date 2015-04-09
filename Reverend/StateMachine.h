@@ -348,8 +348,15 @@ void state_machine_cb(unsigned long diff) {
     case NOSECONE_OPEN:
       state_nosecone_open(diff, time - state_transition_time);
       break;
-
-
+     case DEPLOY_LAUNCH_RAIL:
+       state_deploy_launch_rail(diff, time - state_transition_time);
+       break;
+     case DELAY_POST_LAUNCH_RAIL:
+       state_delay_post_launch_rail(diff, time - state_transition_time);
+       break;
+     case INSERT_IGNITER:
+       state_insert_igniter(diff, time - state_transition_time);
+       break;
     case COMPLETE:
       // wait forever
       break;
