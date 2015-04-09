@@ -91,15 +91,64 @@ class PololuDC {
       digitalWrite(IN_B_PIN, LOW);
       digitalWrite(PWM_PIN, LOW);
     }
-    
+
     void safety() {
-      Serial.println("[DC] WARNING! OVERLOAD PREVENTION DISABLED!");
-      /*
       if (getAmperage() > 18.0) {
         disable();
       }
-      */
     }
 
 
 };
+
+#define DCMD_IGNITER_INSERTER_INA_PIN 27
+#define DCMD_IGNITER_INSERTER_INB_PIN 28
+#define DCMD_IGNITER_INSERTER_PWM_PIN 2
+#define DCMD_IGNITER_INSERTER_DGN_PIN 29
+#define DCMD_IGNITER_INSERTER_CS_PIN A12
+
+
+#define DCMD_ELEVATOR_INA_PIN 30
+#define DCMD_ELEVATOR_INB_PIN 31
+#define DCMD_ELEVATOR_PWM_PIN 3
+#define DCMD_ELEVATOR_DGN_PIN 32
+#define DCMD_ELEVATOR_CS_PIN A13
+
+PololuDC Igniter_Inserter_Motor(DCMD_IGNITER_INSERTER_INA_PIN, DCMD_IGNITER_INSERTER_INB_PIN, DCMD_IGNITER_INSERTER_PWM_PIN, DCMD_IGNITER_INSERTER_DGN_PIN, DCMD_IGNITER_INSERTER_CS_PIN);
+PololuDC Elevator_Motor(DCMD_ELEVATOR_INA_PIN, DCMD_ELEVATOR_INB_PIN, DCMD_ELEVATOR_PWM_PIN, DCMD_ELEVATOR_DGN_PIN, DCMD_ELEVATOR_CS_PIN);
+
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+  
+  Elevator_Motor.setup();
+
+  Elevator_Motor.enable();
+ 
+ 
+  delay(1000);
+  Elevator_Motor.setDirection(PololuDC::DC_FORWARD);
+  Elevator_Motor.setSpeed(255);
+    delay(1000);
+  Elevator_Motor.setDirection(PololuDC::DC_BACKWARD);
+  Elevator_Motor.setSpeed(255);
+  
+  delay(1000);
+  Elevator_Motor.setDirection(PololuDC::DC_FORWARD);
+  Elevator_Motor.setSpeed(64);
+    delay(1000);
+  Elevator_Motor.setDirection(PololuDC::DC_BACKWARD);
+  Elevator_Motor.setSpeed(64);
+}
+
+void loop() {
+  
+  // put your main code here, to run repeatedly:
+  Serial.println(Elevator_Motor.getAmperage());
+  delay(100);
+  //if (Igniter_Inserter_Motor.getAmperage() > 25.0) {
+  //  Igniter_Inserter_Motor.disable();
+  //  }
+
+}

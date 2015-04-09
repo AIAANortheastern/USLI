@@ -3,12 +3,6 @@ void stepper_motion_cb(unsigned long diff) {
 }
 
 void dc_motion_cb(unsigned long diff) {
-  // Prevent stalling by limiting current
-  Igniter_Inserter_Motor.safety();
-  Elevator_Motor.safety();
-  Belt_Linear_Motor.safety();
-  Arm_Pitch_Motor.safety();
-
   // Enforce soft limits
   // TODO: Direction sensitivity
   boolan near, far;
