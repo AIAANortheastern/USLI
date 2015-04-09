@@ -51,7 +51,7 @@ class PololuDC {
         digitalWrite(IN_B_PIN, HIGH);
       }
       else if (dir == DC_BRAKE) {
-        digitalWrite(IN_A_PIN, LOW);
+        digitalWrite(IN_A_PIN, LOW); // TODO: Are these low or high?
         digitalWrite(IN_B_PIN, LOW);
         digitalWrite(PWM_PIN, HIGH);
       }

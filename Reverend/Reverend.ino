@@ -8,7 +8,7 @@
 #include "PololuDC.h"
 
 // Parameters
-#define STEPS_PER_FOOT 222.24
+#define LINEAR_BELT_STEPS_PER_FOOT 222.24
 #include "PinDefinitions.h"
 
 // Global variables
@@ -16,8 +16,6 @@ unsigned long time = 0;
 
 long encoder_position = 0;
 unsigned int encoder_errors = 0;
-
-unsigned int steps_to_nose_closure = 0;
 
 long arm_yaw_stepper_target = 0;
 long arm_yaw_stepper_pos = 0;

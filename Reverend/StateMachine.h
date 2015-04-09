@@ -34,11 +34,9 @@ void state_release_doors(unsigned long diff, unsigned long state_time) {
 // Home motors that use encoders and reset integrators
 // Exits on multiple sensor inputs
 void state_home_motors(unsigned long diff, unsigned long state_time) {
-  static unsigned char phase = 0;
-
-
-  boolean arm_yaw_homed = false;
-  boolean belt_linear_homed = false;
+  
+  static boolean arm_yaw_homed = false;
+  static boolean belt_linear_homed = false;
 
   if (!arm_yaw_homed) {
     bool limit = digitalRead(LMTS_ARM_YAW_PIN);
@@ -104,11 +102,10 @@ void state_initiate_vision(unsigned long diff, unsigned long state_time) {
 // Move forward a specified distance, delay, then repeat
 void state_move_belt_steps(unsigned long diff, unsigned long state_time) {
   static unsigned int step_count = 0;
-  long target = (step_count + 1) * STEPS_PER_FOOT * 1.5; // needs constant
+  long target = (step_count + 1) * LINEAR_BELT_STEPS_PER_FOOT * 1.5;
   int velocity = constrain(abs(target - encoder_position), 32, 255);
   if (step_count > 3) {
-    Belt_Linear_Motor.setSpeed(0);
-    Belt_Linear_Motor.disable();
+    Belt_Linear_Motor.setDirection(PololuDC::DC_BRAKE);
     state_transition_time = time;
     FSM_state = ARM_YAW_SETPOINT;
   } else {
@@ -156,7 +153,7 @@ void state_drop_conveyor(unsigned long diff, unsigned long state_time) {
     Arm_Pitch_Motor.setDirection(PololuDC::FORWARD);
     Arm_Pitch_Motor.setSpeed(128);
   } else {
-    Arm_Pitch_Motor.setDirection(PololuDC::BRAKE);
+    Arm_Pitch_Motor.setDirection(PololuDC::RELEASE);
   }
 
   if (state_time > 2100) {
@@ -174,8 +171,7 @@ void state_run_rakes(unsigned long diff, unsigned long state_time) {
     Arm_Pitch_Motor.setDirection(PololuDC::FORWARD);
     Arm_Pitch_Motor.setSpeed(64);
   } else { // pressed, stop
-    Arm_Pitch_Motor.setDirection(PololuDC::RELEASE);
-    Arm_Pitch_Motor.setSpeed(0);
+    Arm_Pitch_Motor.setDirection(PololuDC::BRAKE);
     state_transition_time = time;
     FSM_state = DELAY_POST_RAKE;
   }
