@@ -22,7 +22,8 @@ void state_await_enable(unsigned long diff, unsigned long state_time) {
 
 // Home motors that use encoders and reset integrators
 // Exits on multiple sensor inputs
-void state_home_motor(unsigned long diff, unsigned long state_time) {
+// TODO: Complete
+void state_home_motors(unsigned long diff, unsigned long state_time) {
   static unsigned char phase = 0;
 
   boolean igniter_inserter_homed = false;
@@ -79,7 +80,7 @@ void state_home_motor(unsigned long diff, unsigned long state_time) {
 
 // Pulse the front hatch and rocket door solenoids to open
 // Exits after set time
-void state_release_door(unsigned long diff, unsigned long state_time) {
+void state_release_doors(unsigned long diff, unsigned long state_time) {
   pinMode(SLND_FRONT_HATCH_PIN, HIGH);
   pinMode(SLND_ROCKET_HATCH_PIN, HIGH);
   if (state_time > 750) { // TODO: needs adjusted timing for nichrome burners
@@ -262,15 +263,8 @@ void state_insert_igniter(unsigned long diff, unsigned long state_time) {
 /*
 enum state_t {
 
-  DROP_CONVEYOR,
-  RUN_RAKES,
-  DELAY_POST_RAKE,
-  BRING_ARM_UP,
-  PERP_ARM,
-  ZERO_BELT,
-  DROP_ELEVATOR,
-  DELAY_ELEVATOR,
-  RAISE_ELEVATOR,
+
+
   DELAY_POST_ELEVATOR,
   NOSECONE_CLOSE,
   NOSECONE_OPEN,
@@ -327,15 +321,34 @@ void state_machine_cb(unsigned long diff) {
     case DELAY_POST_RAKE:
       state_delay_post_rake(diff, time - state_transition_time);
       break;
-      case BRING_ARM_UP:
+    case BRING_ARM_UP:
       state_bring_arm_up(diff, time - state_transition_time);
       break;
-      case PERP_ARM:
+    case PERP_ARM:
       state_perp_arm(diff, time - state_transition_time);
       break;
-      case ZERO_BELT:
+    case ZERO_BELT:
       state_zero_belt(diff, time - state_transition_time);
-      
+      break;
+    case DROP_ELEVATOR:
+      state_drop_elevator(diff, time - state_transition_time);
+      break;
+    case DELAY_ELEVATOR:
+      state_delay_elevator(diff, time - state_transition_time);
+      break;
+    case RAISE_ELEVATOR:
+      state_raise_elevator(diff, time - state_transition_time);
+      break;
+    case DELAY_POST_ELEVATOR:
+      state_delay_post_elevator(diff, time - state_transition_time);
+      break;
+    case NOSECONE_CLOSE:
+      state_nosecone_close(diff, time - state_transition_time);
+      break;
+    case NOSECONE_OPEN:
+      state_nosecone_open(diff, time - state_transition_time);
+      break;
+
 
     case COMPLETE:
       // wait forever
