@@ -57,12 +57,13 @@ void state_home_motor(unsigned long diff, unsigned long state_time) {
       Belt_Linear_Motor.setSpeed(0);
       Belt_Linear_Motor.disable();
       belt_linear_homed = true;
+      // TODO: reset the encoder for home position
     }
   }
 
   if (igniter_inserter_homed && arm_yaw_homed && belt_linear_homed) {
     state_transition_time = time;
-    FSM_state = RELEASE_DOOR;
+    FSM_state = INITIATE_VISION;
   }
 
   if (state_time > 2000) {// Timed out! Something is wrong
@@ -85,7 +86,7 @@ void state_release_door(unsigned long diff, unsigned long state_time) {
     pinMode(SLND_FRONT_HATCH_PIN, LOW);
     pinMode(SLND_ROCKET_HATCH_PIN, LOW);
     state_transition_time = time;
-    FSM_state = INITIATE_VISION;
+    FSM_state = HOME_MOTORSs;
   }
 }
 
@@ -266,7 +267,7 @@ void state_machine_cb(unsigned long diff) {
       break;
     case INIT:
       state_transition_time = time;
-      FSM_state = HOME_MOTORS;
+      FSM_state = RELEASE_DOOR;
       break;
     case HALT:
       // do nothing
