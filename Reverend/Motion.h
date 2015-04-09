@@ -1,25 +1,31 @@
+// Must be called every 3ms for optimal speed!
 void stepper_motion_cb(unsigned long diff) {
-  // none
+  // Arm Yaw
+  if (arm_yaw_stepper_target > arm_yaw_stepper_pos) {
+    Arm_Yaw_Stepper.onestep(FORWARD, DOUBLE);
+    arm_yaw_stepper_pos++;
+  }
+  if (arm_yaw_stepper_target < arm_yaw_stepper_pos) {
+    Arm_Yaw_Stepper.onestep(BACKWARD, DOUBLE);
+    arm_yaw_stepper_pos--;
+  }
+
+  // Nose Closure
+  if (nose_closure_stepper_target > nose_closure_stepper_pos) {
+    Nose_Closure_Stepper.onestep(FORWARD, DOUBLE);
+    nose_closure_stepper_pos++;
+  }
+  if (nose_closure_stepper_target < nose_closure_stepper_pos) {
+    Nose_Closure_Stepper.onestep(BACKWARD, DOUBLE);
+    nose_closure_stepper_pos--;
+  }
+  if (nose_closure_stepper_target == nose_closure_stepper_pos) { // disengage nose closure since no torque is needed
+    Nose_Closure_Stepper.release();
+  }
 }
 
 void dc_motion_cb(unsigned long diff) {
-  // Enforce soft limits
-  // TODO: Direction sensitivity
-  // TODO: The rest of the motors with limit switches
-  boolean near, far;
-  far = digitalRead(LMTS_IGNITER_INSERTER_FAR_PIN);
-  near = digitalRead(LMTS_IGNITER_INSERTER_NEAR_PIN);
-  if (!(far && near)) {
-    Igniter_Inserter_Motor.setSpeed(0);
-    Igniter_Inserter_Motor.disable();
-  }
-
-
-  far = digitalRead(LMTS_BELT_LINEAR_FAR_PIN);
-  near = digitalRead(LMTS_BELT_LINEAR_NEAR_PIN);
-  if (!(far && near)) {
-    Belt_Linear_Motor.setSpeed(0);
-    Belt_Linear_Motor.disable();
-  }
-
+ /* WARNING! SAFETY IS DISABLED! */
 }
+
+// TODO: Halt motors, etc when halted or error

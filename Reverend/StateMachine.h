@@ -1,5 +1,3 @@
-
-
 // Wait for enable switch to start state machine
 // Exits on sensor input
 void state_await_enable(unsigned long diff, unsigned long state_time) {
@@ -35,7 +33,6 @@ void state_release_doors(unsigned long diff, unsigned long state_time) {
 
 // Home motors that use encoders and reset integrators
 // Exits on multiple sensor inputs
-// TODO: Complete
 void state_home_motors(unsigned long diff, unsigned long state_time) {
   static unsigned char phase = 0;
 
@@ -43,15 +40,16 @@ void state_home_motors(unsigned long diff, unsigned long state_time) {
   boolean arm_yaw_homed = false;
   boolean belt_linear_homed = false;
 
-  // TODO: this is bypassed right now
-  state_transition_time = time;
-  FSM_state = CENTER_ARM_YAW;
-  return;
-
   if (!arm_yaw_homed) {
-    // TODO: Arm yaw
-    arm_yaw_homed = true;
+    bool limit = digitalRead(LMTS_ARM_YAW_PIN);
+    arm_yaw_stepper_target = arm_yaw_stepper_pos - 200; // pull backwards continuously
+    if (!limit) { // pressed
+      arm_yaw_stepper_pos = 0;
+      arm_yaw_stepper_target = 0;
+      arm_yaw_homed = true;
+    }
   }
+
 
   if (!belt_linear_homed) {
     boolean limit = digitalRead(LMTS_BELT_LINEAR_NEAR_PIN); // triggers when LOW
@@ -60,8 +58,7 @@ void state_home_motors(unsigned long diff, unsigned long state_time) {
       Belt_Linear_Motor.setDirection(PololuDC::DC_BACKWARD);
       Belt_Linear_Motor.setSpeed(32);
     } else { // hit limit switch
-      Belt_Linear_Motor.setSpeed(0);
-      Belt_Linear_Motor.disable();
+      Belt_Linear_Motor.setDirection(PololuDC::DC_BRAKE);
       belt_linear_homed = true;
       encoder_position = 0;
     }
@@ -86,10 +83,11 @@ void state_home_motors(unsigned long diff, unsigned long state_time) {
 // Center the arm to scanning position
 // Exits after a number of steps
 void state_center_arm_yaw(unsigned long diff, unsigned long state_time) {
-  // TODO: implement
-  Serial.println("[FSM] Error! Center Arm Yaw not implemented...");
-  state_transition_time = time;
-  FSM_state = INITIATE_VISION;
+  arm_yaw_stepper_target = 2550; // 90 degrees
+  if (arm_yaw_stepper_target == arm_yaw_stepper_pos) {
+    state_transition_time = time;
+    FSM_state = INITIATE_VISION;
+  }
 }
 
 
@@ -108,7 +106,6 @@ void state_move_belt_steps(unsigned long diff, unsigned long state_time) {
   static unsigned int step_count = 0;
   long target = (step_count + 1) * STEPS_PER_FOOT * 1.5; // needs constant
   int velocity = constrain(abs(target - encoder_position), 32, 255);
-  // TODO: move it
   if (step_count > 3) {
     Belt_Linear_Motor.setSpeed(0);
     Belt_Linear_Motor.disable();
@@ -143,10 +140,11 @@ void state_delay_belt_steps(unsigned long diff, unsigned long state_time) {
 // Rotate the arm yaw stepper to a predefined setpoint
 // Exits after stepper is pulsed a set number of times
 void state_arm_yaw_setpoint(unsigned long diff, unsigned long state_time) {
-
-  Serial.println("[FSM] Error! Arm yaw setpoint seek not implemented...");
-  state_transition_time = time;
-  FSM_state = DROP_CONVEYOR;
+  arm_yaw_stepper_target = 3120; // ~110 degrees
+  if (arm_yaw_stepper_target == arm_yaw_stepper_pos) {
+    state_transition_time = time;
+    FSM_state = DROP_CONVEYOR;
+  }
 }
 
 
@@ -213,10 +211,11 @@ void state_bring_arm_up(unsigned long diff, unsigned long state_time) {
 
 
 void state_perp_arm(unsigned long diff, unsigned long state_time) {
-  // TODO: implement
-  Serial.println("[FSM] Error! Arm perp unimplemented...");
-  state_transition_time = time;
-  FSM_state = ZERO_BELT;
+  arm_yaw_stepper_target = 2550; // 90 degrees
+  if (arm_yaw_stepper_target == arm_yaw_stepper_pos) {
+    state_transition_time = time;
+    FSM_state = ZERO_BELT;
+  }
 }
 
 
@@ -240,7 +239,7 @@ void state_zero_belt(unsigned long diff, unsigned long state_time) {
 
 
 void state_drop_elevator(unsigned long diff, unsigned long state_time) {
-    boolean limit = digitalRead(LMTS_ELEVATOR_BOTTOM_PIN);
+  boolean limit = digitalRead(LMTS_ELEVATOR_BOTTOM_PIN);
   if (limit) { // not pressed
     Elevator_Motor.enable();
     Elevator_Motor.setDirection(PololuDC::DC_BACKWARD);
@@ -261,7 +260,7 @@ void state_delay_elevator(unsigned long diff, unsigned long state_time) {
 }
 
 void state_raise_elevator(unsigned long diff, unsigned long state_time) {
-   boolean limit = digitalRead(LMTS_ELEVATOR_TOP_PIN);
+  boolean limit = digitalRead(LMTS_ELEVATOR_TOP_PIN);
   if (limit) { // not pressed
     Elevator_Motor.enable();
     Elevator_Motor.setDirection(PololuDC::DC_BACKWARD);
@@ -283,17 +282,23 @@ void state_delay_post_elevator(unsigned long diff, unsigned long state_time) {
 
 
 void state_nosecone_close(unsigned long diff, unsigned long state_time) {
-  // TODO: implement
-  Serial.println("[FSM] Error! Nose close unimplemented...");
-  state_transition_time = time;
-  FSM_state = NOSECONE_OPEN;
+
+  nose_closure_stepper_target = nose_closure_stepper_pos + 200; // push forward continuously
+  bool limit = digitalRead(LMTS_NOSECONE_CLOSURE_PIN);
+
+  if (!limit) { // pressed
+    nose_closure_stepper_target = nose_closure_stepper_pos; // halt motor
+    state_transition_time = time;
+    FSM_state = NOSECONE_OPEN;
+  }
 }
 
 void state_nosecone_open(unsigned long diff, unsigned long state_time) {
-  // TODO: implement
-  Serial.println("[FSM] Error! Nose open unimplemented...");
-  state_transition_time = time;
-  FSM_state = DEPLOY_LAUNCH_RAIL;
+  nose_closure_stepper_target = 0;
+  if (nose_closure_stepper_target == nose_closure_stepper_pos) {
+    state_transition_time = time;
+    FSM_state = DEPLOY_LAUNCH_RAIL;
+  }
 }
 
 void state_deploy_launch_rail(unsigned long diff, unsigned long state_time) {
@@ -338,10 +343,15 @@ void state_machine_cb(unsigned long diff) {
       FSM_state = RELEASE_DOORS;
       break;
     case HALT:
-      // do nothing
+      Arm_Yaw_Stepper->release();
+      Nose_Closure_Stepper->release();
+      establish_safe_state();
+      // Do nothing
       break;
     case ERROR_STATE:
-      // Remain in error state, sadly
+      Arm_Yaw_Stepper->release();
+      Nose_Closure_Stepper->release();
+      establish_safe_state();
       break;
     case HOME_MOTORS:
       state_home_motors(diff, time - state_transition_time);

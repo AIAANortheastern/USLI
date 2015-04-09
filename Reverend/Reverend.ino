@@ -19,6 +19,12 @@ unsigned int encoder_errors = 0;
 
 unsigned int steps_to_nose_closure = 0;
 
+long arm_yaw_stepper_target = 0;
+long arm_yaw_stepper_pos = 0;
+
+long nose_closure_stepper_target = 0;
+long nose_closure_stepper_pos = 0;
+
 
 // State machine
 enum state_t {
@@ -66,11 +72,12 @@ unsigned long state_transition_time = 0;
 // Threads
 Thread Encoder_Thread(&encoder_cb, 1);
 Thread FSM_Thread(&state_machine_cb, 10);
-Thread Stepper_Motion_Thread(&stepper_motion_cb, 1); // TODO: Decrease update frequency for steppers
-Thread DC_Motion_Thread(&dc_motion_cb, 1); // TODO: Decrease update frequency for dc
+Thread Stepper_Motion_Thread(&stepper_motion_cb, 3);
+Thread DC_Motion_Thread(&dc_motion_cb, 1);
 Thread Halt_Thread(&halt_cb, 50);
 Thread Visual_Indicators_Thread(&visual_indicators_cb, 500);
 Thread Debug_Thread(&debug_cb, 100);
+
 
 
 // Functions
@@ -82,7 +89,6 @@ void setup() {
   pin_setup(); // set up non-critical pins
 
   Serial.begin(9600);
-
 }
 
 void loop() {

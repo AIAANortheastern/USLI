@@ -1,5 +1,3 @@
-// TODO: Check "release" code
-
 class PololuDC {
   private:
     uint8_t IN_A_PIN;

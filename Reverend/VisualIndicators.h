@@ -11,5 +11,4 @@ void visual_indicators_cb(unsigned long diff) {
   if (FSM_state == COMPLETE) {
     digitalWrite(VIND_ASG_PIN, HIGH);
   }
-
 }

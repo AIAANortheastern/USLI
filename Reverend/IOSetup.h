@@ -1,20 +1,25 @@
 
 // Perform minimum initialization needed to establish a safe state
 void establish_safe_state() {
+  // Solenoids
   pinMode(SLND_FRONT_HATCH_PIN, OUTPUT); digitalWrite(SLND_FRONT_HATCH_PIN, LOW);
   pinMode(SLND_LAUNCH_ROD_PIN, OUTPUT); digitalWrite(SLND_LAUNCH_ROD_PIN, LOW);
   pinMode(SLND_ROCKET_HATCH_PIN, OUTPUT); digitalWrite(SLND_ROCKET_HATCH_PIN, LOW);
+  
+  // DC Motors
   Igniter_Inserter_Motor.setup();
   Elevator_Motor.setup();
   Belt_Linear_Motor.setup();
   Arm_Pitch_Motor.setup();
   Arm_Pitch_Motor.enable();
   Arm_Pitch_Motor.setDirection(PololuDC::BRAKE);
+  
+ 
 }
 
 
 void pin_setup() {
-  // steppers
+   // steppers
   AFMS.begin();
   Arm_Yaw_Stepper->release();
   Nose_Closure_Stepper->release();
