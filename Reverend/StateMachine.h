@@ -259,6 +259,38 @@ void state_insert_igniter(unsigned long diff, unsigned long state_time) {
 }
 
 
+/*
+enum state_t {
+  AWAIT_ENABLE,
+  INIT,
+  HALT,
+  ERROR_STATE,
+  RELEASE_DOORS,
+  HOME_MOTORS,
+  CENTER_ARM_YAW,
+  INITIATE_VISION,
+  MOVE_BELT_STEPS,
+  DELAY_BELT_STEPS,
+  ARM_YAW_SETPOINT,
+  DROP_CONVEYOR,
+  RUN_RAKES,
+  DELAY_POST_RAKE,
+  BRING_ARM_UP,
+  PERP_ARM,
+  ZERO_BELT,
+  DROP_ELEVATOR,
+  DELAY_ELEVATOR,
+  RAISE_ELEVATOR,
+  DELAY_POST_ELEVATOR,
+  NOSECONE_CLOSE,
+  NOSECONE_OPEN,
+  DEPLOY_LAUNCH_RAIL,
+  DELAY_POST_LAUNCH_RAIL,
+  INSERT_IGNITER,
+  COMPLETE
+};
+*/
+
 
 void state_machine_cb(unsigned long diff) {
   switch (FSM_state) {
@@ -276,68 +308,12 @@ void state_machine_cb(unsigned long diff) {
       // Remain in error state, sadly
       break;
     case HOME_MOTORS:
-      state_home_motor(diff, time - state_transition_time);
+      state_home_motors(diff, time - state_transition_time);
       break;
-    case RELEASE_DOOR:
-      state_release_door(diff, time - state_transition_time);
+    case RELEASE_DOORS:
+      state_release_doors(diff, time - state_transition_time);
       break;
-    case EXTEND_BELT:
-      state_extend_belt(diff, time - state_transition_time);
-      break;
-    case FIND_LINEAR_SETPOINT:
-      state_find_linear_setpoint(diff, time - state_transition_time);
-      break;
-    case FIND_YAW_SETPOINT:
-      state_find_yaw_setpoint(diff, time - state_transition_time);
-      break;
-    case INITIATE_VISION:
-      state_initiate_vision(diff, time - state_transition_time);
-      break;
-    case ACCEPT_PACKET:
-      state_accept_packet(diff, time - state_transition_time);
-      break;
-    case REMOTE_MOVE:
-      state_remote_move(diff, time - state_transition_time);
-      break;
-    case SEND_ACK:
-      state_send_ack(diff, time - state_transition_time);
-      break;
-    case DRIVE_CONVEYOR:
-      state_drive_conveyor(diff, time - state_transition_time);
-      break;
-    case RAISE_CONVEYOR:
-      state_raise_conveyor(diff, time - state_transition_time);
-      break;
-    case STORE_ARM:
-      state_store_arm(diff, time - state_transition_time);
-      break;
-    case RETRACT_BELT:
-      state_retract_belt(diff, time - state_transition_time);
-      break;
-    case LOWER_ELEVATOR:
-      state_lower_elevator(diff, time - state_transition_time);
-      break;
-    case RUN_ELEVATOR:
-      state_run_elevator(diff, time - state_transition_time);
-      break;
-    case AWAIT_PAYLOAD:
-      state_await_payload(diff, time - state_transition_time);
-      break;
-    case DELAY_NOSE_CLOSURE:
-      state_delay_nose_closure(diff, time - state_transition_time);
-      break;
-    case DEPLOY_NOSE_CLOSURE:
-      state_deploy_nose_closure(diff, time - state_transition_time);
-      break;
-    case RETRACT_NOSE_CLOSURE:
-      state_retract_nose_closure(diff, time - state_transition_time);
-      break;
-    case ERECT_ROCKET:
-      state_erect_rocket(diff, time - state_transition_time);
-      break;
-    case INSERT_IGNITER:
-      state_insert_igniter(diff, time - state_transition_time);
-      break;
+
     case COMPLETE:
       // wait forever
       break;
