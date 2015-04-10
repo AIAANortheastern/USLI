@@ -34,7 +34,7 @@ void state_release_doors(unsigned long diff, unsigned long state_time) {
 // Home motors that use encoders and reset integrators
 // Exits on multiple sensor inputs
 void state_home_motors(unsigned long diff, unsigned long state_time) {
-  
+
   static boolean arm_yaw_homed = false;
   static boolean belt_linear_homed = false;
 
@@ -150,10 +150,10 @@ void state_arm_yaw_setpoint(unsigned long diff, unsigned long state_time) {
 void state_drop_conveyor(unsigned long diff, unsigned long state_time) {
   if (state_time < 100) {
     Arm_Pitch_Motor.enable();
-    Arm_Pitch_Motor.setDirection(PololuDC::FORWARD);
+    Arm_Pitch_Motor.setDirection(PololuDC::DC_FORWARD);
     Arm_Pitch_Motor.setSpeed(128);
   } else {
-    Arm_Pitch_Motor.setDirection(PololuDC::RELEASE);
+    Arm_Pitch_Motor.setDirection(PololuDC::DC_RELEASE);
   }
 
   if (state_time > 2100) {
@@ -168,10 +168,10 @@ void state_run_rakes(unsigned long diff, unsigned long state_time) {
   boolean val = digitalRead(LMTS_RAKE_NEAR_PIN);
   if (val) { // not pressed, back up
     Arm_Pitch_Motor.enable();
-    Arm_Pitch_Motor.setDirection(PololuDC::FORWARD);
+    Arm_Pitch_Motor.setDirection(PololuDC::DC_FORWARD);
     Arm_Pitch_Motor.setSpeed(64);
   } else { // pressed, stop
-    Arm_Pitch_Motor.setDirection(PololuDC::BRAKE);
+    Arm_Pitch_Motor.setDirection(PololuDC::DC_BRAKE);
     state_transition_time = time;
     FSM_state = DELAY_POST_RAKE;
   }
@@ -193,10 +193,10 @@ void state_bring_arm_up(unsigned long diff, unsigned long state_time) {
   if (val) { // not pressed
     int velocity = max(32, 255 - state_time);
     Arm_Pitch_Motor.enable();
-    Arm_Pitch_Motor.setDirection(PololuDC::FORWARD);
+    Arm_Pitch_Motor.setDirection(PololuDC::DC_FORWARD);
     Arm_Pitch_Motor.setSpeed(velocity);
   } else { // pressed
-    Arm_Pitch_Motor.setDirection(PololuDC::BRAKE);
+    Arm_Pitch_Motor.setDirection(PololuDC::DC_BRAKE);
     state_transition_time = time;
     FSM_state = PERP_ARM;
   }
@@ -341,13 +341,19 @@ void state_machine_cb(unsigned long diff) {
     case HALT:
       Arm_Yaw_Stepper->release();
       Nose_Closure_Stepper->release();
-      establish_safe_state();
+      Igniter_Inserter_Motor.setDirection(PololuDC::DC_BRAKE);
+      Elevator_Motor.setDirection(PololuDC::DC_BRAKE);
+      Belt_Linear_Motor.setDirection(PololuDC::DC_BRAKE);
+      Arm_Pitch_Motor.setDirection(PololuDC::DC_BRAKE);
       // Do nothing
       break;
     case ERROR_STATE:
       Arm_Yaw_Stepper->release();
       Nose_Closure_Stepper->release();
-      establish_safe_state();
+      Igniter_Inserter_Motor.setDirection(PololuDC::DC_BRAKE);
+      Elevator_Motor.setDirection(PololuDC::DC_BRAKE);
+      Belt_Linear_Motor.setDirection(PololuDC::DC_BRAKE);
+      Arm_Pitch_Motor.setDirection(PololuDC::DC_BRAKE);
       break;
     case HOME_MOTORS:
       state_home_motors(diff, time - state_transition_time);

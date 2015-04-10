@@ -12,7 +12,7 @@ void establish_safe_state() {
   Belt_Linear_Motor.setup();
   Arm_Pitch_Motor.setup();
   Arm_Pitch_Motor.enable();
-  Arm_Pitch_Motor.setDirection(PololuDC::BRAKE);
+  Arm_Pitch_Motor.setDirection(PololuDC::DC_BRAKE);
   
  
 }
@@ -26,8 +26,7 @@ void pin_setup() {
 
 
   // inputs
-  pinMode(LMTS_IGNITER_INSERTER_NEAR_PIN, INPUT_PULLUP);
-  pinMode(LMTS_IGNITER_INSERTER_FAR_PIN, INPUT_PULLUP);
+  pinMode(LMTS_IGNITER_INSERTER_PIN, INPUT_PULLUP);
   pinMode(LMTS_ELEVATOR_TOP_PIN, INPUT_PULLUP);
   pinMode(LMTS_ELEVATOR_BOTTOM_PIN, INPUT_PULLUP);
   pinMode(LMTS_NOSECONE_CLOSURE_PIN, INPUT_PULLUP);
