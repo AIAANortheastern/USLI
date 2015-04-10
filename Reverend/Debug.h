@@ -10,8 +10,12 @@ void debug_cb(unsigned long diff) {
   Serial.print(arm_yaw_stepper_target);
   Serial.print("\tPos:");
   Serial.print(arm_yaw_stepper_pos);
+  Serial.print("\tReached:");
+  Serial.print(arm_yaw_stepper_pos == arm_yaw_stepper_target);
   Serial.print("\tNose Target:");
   Serial.print(nose_closure_stepper_target);
   Serial.print("\tPos:");
-  Serial.println(nose_closure_stepper_pos);
+  Serial.print(nose_closure_stepper_pos);
+  Serial.print("\tReached:");
+  Serial.println(nose_closure_stepper_pos == nose_closure_stepper_target);
 }

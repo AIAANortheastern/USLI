@@ -70,11 +70,11 @@ unsigned long state_transition_time = 0;
 // Threads
 Thread Encoder_Thread(&encoder_cb, 1);
 Thread FSM_Thread(&state_machine_cb, 10);
-Thread Stepper_Motion_Thread(&stepper_motion_cb, 3);
+Thread Stepper_Motion_Thread(&stepper_motion_cb, 4);
 Thread DC_Motion_Thread(&dc_motion_cb, 1);
 Thread Halt_Thread(&halt_cb, 50);
 Thread Visual_Indicators_Thread(&visual_indicators_cb, 500);
-Thread Debug_Thread(&debug_cb, 100);
+Thread Debug_Thread(&debug_cb, 200);
 
 
 
@@ -86,17 +86,40 @@ void setup() {
   
   pin_setup(); // set up non-critical pins
 
-  Serial.begin(9600);
+  Serial.begin(115200);
 }
 
 void loop() {
   time = millis();
 
-  Encoder_Thread.update(time);
-  FSM_Thread.update(time);
+//  Encoder_Thread.update(time);
+ // FSM_Thread.update(time);
   Stepper_Motion_Thread.update(time);
-  DC_Motion_Thread.update(time);
-  Halt_Thread.update(time);
+ // DC_Motion_Thread.update(time);
+//  Halt_Thread.update(time);
   Visual_Indicators_Thread.update(time);
   Debug_Thread.update(time);
+  
+  
+  FSM_state = COMPLETE;
+  while (Serial.available()) {
+    char in = Serial.read();
+    if (in == '+') {
+      nose_closure_stepper_target += 200;
+    } else if (in == '-') {
+      nose_closure_stepper_target -= 200;
+    }
+     if (in == 'l') {
+      arm_yaw_stepper_target += 170;
+    } else if (in == 'r') {
+      arm_yaw_stepper_target -= 170;
+    }
+    
+    if (in == 'x') {
+      Nose_Closure_Stepper->release();
+      Arm_Yaw_Stepper->release();
+    }
+  }
+  
+  
 }

@@ -14,6 +14,9 @@ void stepper_motion_cb(unsigned long diff) {
       Arm_Yaw_Stepper->onestep(BACKWARD, DOUBLE);
       arm_yaw_stepper_pos--;
     }
+   //  if (arm_yaw_stepper_target == arm_yaw_stepper_pos) { 
+    //  Arm_Yaw_Stepper->release();
+   // }
 
     // Nose Closure
     if (nose_closure_stepper_target > nose_closure_stepper_pos) {

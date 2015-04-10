@@ -30,9 +30,11 @@ void loop() {
     } else if (cmd == '1') {
       Serial.println("Motor 1 Selected");
       myMotor = motorA;
+      motorB->release();
     } else if (cmd == '2') {
       Serial.println("Motor 2 Selected");
       myMotor = motorB;
+      motorA->release();
     } else {
       Serial.println("Halt");
     }
