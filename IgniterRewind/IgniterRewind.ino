@@ -144,9 +144,12 @@ void setup() {
   Belt_Linear_Motor.setup();
   Arm_Pitch_Motor.setup();
 
-  PololuDC * motor = &Igniter_Inserter_Motor;
+  PololuDC * motor = &Belt_Linear_Motor;
+motor->enable();
+motor->setDirection(PololuDC::DC_FORWARD);
+motor->setSpeed(64);
 
-
+while (true) {}
 
 }
 

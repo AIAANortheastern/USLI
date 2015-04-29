@@ -102,75 +102,39 @@ class PololuDC {
 
 };
 
+#define SLND_ARM_LATCH_PIN 51
 
-#define LMTS_IGNITER_INSERTER_PIN 35
-
-#define DCMD_IGNITER_INSERTER_INA_PIN 29
-#define DCMD_IGNITER_INSERTER_INB_PIN 31
-#define DCMD_IGNITER_INSERTER_PWM_PIN 5
-#define DCMD_IGNITER_INSERTER_DGN_PIN 33
-
-// Does not work
-#define DCMD_ELEVATOR_INA_PIN 30
-#define DCMD_ELEVATOR_INB_PIN 28
-#define DCMD_ELEVATOR_PWM_PIN 3
-#define DCMD_ELEVATOR_DGN_PIN 32
-
-#define DCMD_BELT_LINEAR_INA_PIN 27
-#define DCMD_BELT_LINEAR_INB_PIN 25
-#define DCMD_BELT_LINEAR_PWM_PIN 4
-#define DCMD_BELT_LINEAR_DGN_PIN 23
 
 #define DCMD_ARM_PITCH_INA_PIN 24
 #define DCMD_ARM_PITCH_INB_PIN 26
 #define DCMD_ARM_PITCH_PWM_PIN 2
 #define DCMD_ARM_PITCH_DGN_PIN 22
 
-PololuDC Igniter_Inserter_Motor(DCMD_IGNITER_INSERTER_INA_PIN, DCMD_IGNITER_INSERTER_INB_PIN, DCMD_IGNITER_INSERTER_PWM_PIN, DCMD_IGNITER_INSERTER_DGN_PIN);
-PololuDC Elevator_Motor(DCMD_ELEVATOR_INA_PIN, DCMD_ELEVATOR_INB_PIN, DCMD_ELEVATOR_PWM_PIN, DCMD_ELEVATOR_DGN_PIN);
-PololuDC Belt_Linear_Motor(DCMD_BELT_LINEAR_INA_PIN, DCMD_BELT_LINEAR_INB_PIN, DCMD_BELT_LINEAR_PWM_PIN, DCMD_BELT_LINEAR_DGN_PIN);
+
 PololuDC Arm_Pitch_Motor(DCMD_ARM_PITCH_INA_PIN, DCMD_ARM_PITCH_INB_PIN, DCMD_ARM_PITCH_PWM_PIN, DCMD_ARM_PITCH_DGN_PIN);
 
 void setup() {
-  // put your setup code here, to run once:
-  Serial.begin(9600);
-
-
-  pinMode(LMTS_IGNITER_INSERTER_PIN, INPUT_PULLUP);
-
-
-  Igniter_Inserter_Motor.setup();
-  Elevator_Motor.setup();
-  Belt_Linear_Motor.setup();
+  pinMode(SLND_ARM_LATCH_PIN, OUTPUT); digitalWrite(SLND_ARM_LATCH_PIN, LOW);
   Arm_Pitch_Motor.setup();
+  Arm_Pitch_Motor.enable();
+  Arm_Pitch_Motor.setDirection(PololuDC::DC_BRAKE);
 
-  PololuDC * motor = &Igniter_Inserter_Motor;
 
-
+  delay(1000);
+  digitalWrite(SLND_ARM_LATCH_PIN, HIGH);
+  delay(200);
+  Arm_Pitch_Motor.setDirection(PololuDC::DC_BACKWARD);
+  Arm_Pitch_Motor.setSpeed(128);
+  delay(100);
+  Arm_Pitch_Motor.setDirection(PololuDC::DC_RELEASE);
+  delay(500);
+  Arm_Pitch_Motor.setDirection(PololuDC::DC_BRAKE);
+ 
+  digitalWrite(SLND_ARM_LATCH_PIN, LOW);
 
 }
 
-boolean runs = true;
-  
-boolean up = false;
-
 void loop() {
-  if (up) {
-    if (runs) {
-      boolean limit = digitalRead(LMTS_IGNITER_INSERTER_PIN);
-      if (limit) { // not pressed
-        Igniter_Inserter_Motor.enable();
-        Igniter_Inserter_Motor.setDirection(PololuDC::DC_FORWARD);
-        Igniter_Inserter_Motor.setSpeed(64);
-      } else { // pressed
-        Igniter_Inserter_Motor.setDirection(PololuDC::DC_BRAKE);
-        runs = false;
-      }
-    }
-  } else {
-    Igniter_Inserter_Motor.enable();
-    Igniter_Inserter_Motor.setDirection(PololuDC::DC_BACKWARD);
-    Igniter_Inserter_Motor.setSpeed(128);
-  }
+  // put your main code here, to run repeatedly:
 
 }

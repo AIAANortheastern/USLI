@@ -20,13 +20,15 @@ void state_await_enable(unsigned long diff, unsigned long state_time) {
 // Pulse the front hatch and rocket door solenoids to open
 // Exits after set time
 void state_release_doors(unsigned long diff, unsigned long state_time) {
-  pinMode(SLND_FRONT_HATCH_PIN, HIGH);
-  pinMode(SLND_ROCKET_HATCH_PIN, HIGH);
+  digitalWrite(SLND_FRONT_HATCH_PIN, HIGH);
+  digitalWrite(SLND_ROCKET_HATCH_PIN, HIGH);
   if (state_time > 750) {
-    pinMode(SLND_FRONT_HATCH_PIN, LOW);
-    pinMode(SLND_ROCKET_HATCH_PIN, LOW);
+    digitalWrite(SLND_FRONT_HATCH_PIN, LOW);
+    digitalWrite(SLND_ROCKET_HATCH_PIN, LOW);
     state_transition_time = time;
-    FSM_state = HOME_MOTORS;
+    FSM_state = DEMO_MOVE;
+
+    // TODO: This is bypassed! Warning and all that!
   }
 }
 
@@ -39,6 +41,8 @@ void state_home_motors(unsigned long diff, unsigned long state_time) {
   static boolean belt_linear_homed = false;
 
   if (!arm_yaw_homed) {
+    // TODO: disabled
+    /*
     bool limit = digitalRead(LMTS_ARM_YAW_PIN);
     arm_yaw_stepper_target = arm_yaw_stepper_pos - 200; // pull backwards continuously
     if (!limit) { // pressed
@@ -46,6 +50,8 @@ void state_home_motors(unsigned long diff, unsigned long state_time) {
       arm_yaw_stepper_target = 0;
       arm_yaw_homed = true;
     }
+    */
+    arm_yaw_homed = true;
   }
 
 
@@ -54,7 +60,7 @@ void state_home_motors(unsigned long diff, unsigned long state_time) {
     if (limit) { // not pressed, back up
       Belt_Linear_Motor.enable();
       Belt_Linear_Motor.setDirection(PololuDC::DC_BACKWARD);
-      Belt_Linear_Motor.setSpeed(32);
+      Belt_Linear_Motor.setSpeed(64);
     } else { // hit limit switch
       Belt_Linear_Motor.setDirection(PololuDC::DC_BRAKE);
       belt_linear_homed = true;
@@ -65,6 +71,8 @@ void state_home_motors(unsigned long diff, unsigned long state_time) {
   if (arm_yaw_homed && belt_linear_homed) {
     state_transition_time = time;
     FSM_state = CENTER_ARM_YAW;
+    // TODO: override
+    FSM_state = INITIATE_VISION;
   }
 
   if (state_time > 15000) {// Timed out! Something is wrong
@@ -125,9 +133,9 @@ void state_move_belt_steps(unsigned long diff, unsigned long state_time) {
 }
 
 
-// Wait 10 seconds then shunt back to previous state
+// Wait 1 seconds then shunt back to previous state
 void state_delay_belt_steps(unsigned long diff, unsigned long state_time) {
-  if (state_time > 10000) {
+  if (state_time > 1000) {
     state_transition_time = time;
     FSM_state = MOVE_BELT_STEPS;
   }
@@ -137,34 +145,53 @@ void state_delay_belt_steps(unsigned long diff, unsigned long state_time) {
 // Rotate the arm yaw stepper to a predefined setpoint
 // Exits after stepper is pulsed a set number of times
 void state_arm_yaw_setpoint(unsigned long diff, unsigned long state_time) {
+  // TODO: Bypass
+  FSM_state = DROP_CONVEYOR;
+  /*
+
   arm_yaw_stepper_target = 3120; // ~110 degrees
   if (arm_yaw_stepper_target == arm_yaw_stepper_pos) {
     state_transition_time = time;
     FSM_state = DROP_CONVEYOR;
   }
+  */
 }
 
 
 // Drive conveyor for a specified duration
 // Exits on timed transition
 void state_drop_conveyor(unsigned long diff, unsigned long state_time) {
-  if (state_time < 100) {
-    Arm_Pitch_Motor.enable();
-    Arm_Pitch_Motor.setDirection(PololuDC::DC_FORWARD);
-    Arm_Pitch_Motor.setSpeed(128);
+  if (state_time < 1000) {
+    digitalWrite(SLND_ARM_LATCH_PIN, HIGH);
   } else {
-    Arm_Pitch_Motor.setDirection(PololuDC::DC_RELEASE);
+    digitalWrite(SLND_ARM_LATCH_PIN, LOW);
   }
 
-  if (state_time > 2100) {
+  if (state_time < 100) {
+    // wait for solenoid
+  } else if (state_time < 200) { // 100-200 backward
+    Arm_Pitch_Motor.enable();
+    Arm_Pitch_Motor.setDirection(PololuDC::DC_BACKWARD);
+    Arm_Pitch_Motor.setSpeed(128);
+  } else if (state_time < 700) { // 200-700 release
+    Arm_Pitch_Motor.setDirection(PololuDC::DC_RELEASE);
+  } else { // 700-2000
+    Arm_Pitch_Motor.setDirection(PololuDC::DC_BRAKE);
+  }
+
+  if (state_time > 2000) {
     state_transition_time = time;
+    // TODO: bypass
     FSM_state = RUN_RAKES;
+    //FSM_state = COMPLETE;
   }
 }
 
 
 
 void state_run_rakes(unsigned long diff, unsigned long state_time) {
+ 
+/*
   boolean val = digitalRead(LMTS_RAKE_NEAR_PIN);
   if (val) { // not pressed, back up
     Arm_Pitch_Motor.enable();
@@ -173,8 +200,12 @@ void state_run_rakes(unsigned long diff, unsigned long state_time) {
   } else { // pressed, stop
     Arm_Pitch_Motor.setDirection(PololuDC::DC_BRAKE);
     state_transition_time = time;
-    FSM_state = DELAY_POST_RAKE;
+    //    FSM_state = DELAY_POST_RAKE;
+    FSM_state = NOSECONE_CLOSE;
   }
+*/
+  FSM_state = NOSECONE_CLOSE;
+  
 }
 
 
@@ -269,6 +300,9 @@ void state_raise_elevator(unsigned long diff, unsigned long state_time) {
 }
 
 
+
+
+
 void state_delay_post_elevator(unsigned long diff, unsigned long state_time) {
   if (state_time > 10000) {
     state_transition_time = time;
@@ -290,17 +324,19 @@ void state_nosecone_close(unsigned long diff, unsigned long state_time) {
 }
 
 void state_nosecone_open(unsigned long diff, unsigned long state_time) {
-  nose_closure_stepper_target = 0;
+  nose_closure_stepper_target = 800; // offset for motor slip (experimental
   if (nose_closure_stepper_target == nose_closure_stepper_pos) {
     state_transition_time = time;
     FSM_state = DEPLOY_LAUNCH_RAIL;
+    // TODO: I changed this to bypass
+    //FSM_state = COMPLETE;
   }
 }
 
 void state_deploy_launch_rail(unsigned long diff, unsigned long state_time) {
-  pinMode(SLND_LAUNCH_ROD_PIN, HIGH);
-  if (state_time > 750) {
-    pinMode(SLND_LAUNCH_ROD_PIN, LOW);
+  digitalWrite(SLND_LAUNCH_ROD_PIN, HIGH);
+  if (state_time > 1000) {
+    digitalWrite(SLND_LAUNCH_ROD_PIN, LOW);
     state_transition_time = time;
     FSM_state = DELAY_POST_LAUNCH_RAIL;
   }
@@ -326,6 +362,25 @@ void state_insert_igniter(unsigned long diff, unsigned long state_time) {
   }
 }
 
+
+void state_demo_move(unsigned long diff, unsigned long state_time) {
+  if (state_time < 4000) {
+    Belt_Linear_Motor.enable();
+    Belt_Linear_Motor.setDirection(PololuDC::DC_FORWARD);
+    Belt_Linear_Motor.setSpeed(255);
+  } else if (state_time < 5000) {
+    Belt_Linear_Motor.setDirection(PololuDC::DC_BRAKE);
+  } else if (state_time < 6000) {
+    Belt_Linear_Motor.setDirection(PololuDC::DC_BACKWARD);
+    Belt_Linear_Motor.setSpeed(255);
+  } else if (state_time > 9000) {
+    Belt_Linear_Motor.setDirection(PololuDC::DC_BRAKE);
+    state_transition_time = time;
+    FSM_state = DROP_CONVEYOR;
+  }
+
+
+}
 
 
 
@@ -423,6 +478,9 @@ void state_machine_cb(unsigned long diff) {
       break;
     case COMPLETE:
       // wait forever
+      break;
+    case DEMO_MOVE:
+      state_demo_move(diff, time - state_transition_time);
       break;
     default:
       Serial.print("[FSM] Critical error! State {");
